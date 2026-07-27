@@ -1,0 +1,1 @@
+PARKING.md : - [J141] dbt debug échoue au login Snowflake | env + squelette OK, connexion FAIL | J142 Bloc 2, 15 min max avant escalade

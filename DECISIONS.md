@@ -99,25 +99,32 @@ J'ai choisi de ne pas partager cela aux autres schémas (intermediate et marts) 
 
 ## 5. AI in development
 
-Outils : Claude (référent) — clarification de concepts et de faits.
-Laissé à l'IA : lever un doute (édition Enterprise ; Time Travel 90 j vs 1 j ; notion de grain) ; relecture/correction de mon SQL.
-PAS laissé à l'IA : l'écriture du SQL et du script Python (moi) ; le choix du grain et des métriques (moi).
-Mes checks : à appliquer au premier merge (rappel).
-
-
-
-
 **Outils** : assistants IA (clarification de concepts, décodage d'erreurs, relecture).
 
 **Ce que je laisse à l'IA**
 - expliquer un concept Snowflake/dbt que je ne connais pas encore
 - m'orienter vers la bonne page de documentation
 - relire mon code et signaler bugs/incohérences
-- création de schéma préalablement validé par moi
+- utilisation pour setup/config de .venv et connexion snowflake via dbt
 
 **Ce que je ne laisse JAMAIS à l'IA**
 - l'écriture de mon SQL, YAML, Python, workflows CI
 - le choix du grain, des métriques, de la modélisation dims/faits
 - le clustering/partitioning
 
-**Mes checks** : je réécris tout fichier que je ne peux pas réexpliquer le lendemain matin pour valider la rétention d'information.
+**Mon check** : 
+- je réécris tout fichier que je ne peux pas réexpliquer le lendemain matin pour valider la rétention d'information.
+
+**Si je franchis la ligne**
+Déclencheur — je colle une commande ou un bloc de code que je ne peux pas expliquer ligne par ligne.
+
+Geste — je supprime ce que j'ai collé et je le réécris à la main, sans IA.
+
+Trace — j'ouvre une entrée ÉCART dans le journal ci-dessous, le jour même.
+
+**LOGS**
+J141 — 27/07 — setup .venv + connexion dbt/Snowflake
+- délégué : diagnostic d'un conflit venv/apt lié à la configuration de mon poste
+- gardé : exécution des commandes et validation avant lancement
+- écart : un rm -rf proposé, enlevé à la lecture
+- check : réécriture prévue J142 — non bouclé à ce jour
