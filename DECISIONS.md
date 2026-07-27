@@ -117,9 +117,7 @@ J'ai choisi de ne pas partager cela aux autres schémas (intermediate et marts) 
 
 **Si je franchis la ligne**
 Déclencheur — je colle une commande ou un bloc de code que je ne peux pas expliquer ligne par ligne.
-
 Geste — je supprime ce que j'ai collé et je le réécris à la main, sans IA.
-
 Trace — j'ouvre une entrée ÉCART dans le journal ci-dessous, le jour même.
 
 **LOGS**
