@@ -1,0 +1,19 @@
+version: 2
+## dbt test --select source:ademe
+## dbt show --inline "select count(*) from {{ source('ademe','agribalyse_detail_par_ingredient') }}"
+
+sources:
+  - name: ademe
+    description: "Données ADEME AGRIBALYSE - Détail par ingrédient"
+    database: DATABASE_AGRIBALYSE
+    schema: STAGING
+    tables: 
+      - name: agribalyse_detail_par_ingredient
+        description: "AGRIBALYSE® v3.2. Mis à jour le 27 février 2025 - 6161 lignes"
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              arguments:
+                combination_of_columns:
+                  - CIQUAL_AGB
+                  - INGREDIENTS
+
