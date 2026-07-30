@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: stg_agribalyse_detail_par_ingredient
+    description: "AGRIBALYSE® v3.2 - renommage et ajout de la clé technique"
+    columns:
+      - name: ciqual_agb
+        description: "Identifiant agribalyse"
+        data_tests:
+          - not_null
+      - name: ingredients
+        description: "Ingrédient qui compose un produit"
+        data_tests:
+          - not_null
+      - name: agb_ingredients_key
+        description: "Clé technique unique"
+        data_tests:
+          - unique
+          - not_null
+      - name: groupe_daliment
+        description: "Groupe d'aliment du produit"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['entrées et plats composés','produits céréaliers','viandes, œufs, poissons','aides culinaires et ingrédients divers','lait et produits laitiers','boissons','fruits, légumes, légumineuses et oléagineux','produits sucrés','aliments infantiles','glaces et sorbets','matières grasses']
+                

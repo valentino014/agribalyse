@@ -88,14 +88,137 @@ J'ai choisi de ne pas partager cela aux autres schémas (intermediate et marts) 
 
 **Choix** : Utilisation de Named stage comme stage interne
 - **Justification** : 
-- Nommable simplement
-- il est grantable, ajout de droit possible
-- Facile à documenter
+- Nommable simplement.
+- Il est grantable, ajout de droit possible.
+- Facile à documenter.
 
 ### 4.5 Création du stage
 
 **Choix** : Lors de la création du stage, je n'ajoute pas de OR REPLACE dans le SQL.
 - **Justification** : Ajouter le OR REPLACE dans le SQL Snowflake viendrait à supprimer le fichier si jamais je rejoues le setup après avoir chargé une première fois.
+
+### 4.6 Emplacement du projet dbt
+
+**Choix** : dbt sera placé ici : `agribalyse/dbt_project/` Sous-dossier, `.github/` à la racine, comme le Projet 1.
+- **Justification** : 
+- L'alignement avec le projet 1 simplifie la compréhension et l'application des mêmes principes.
+- Le placer dans le dossier `dbt_project` délimite bien ce qu'il est et permet une meilleure compréhension visuelle rapide. Cela ne va pas mélanger car j'ai des fichiers de documentation, de python etc. Ainsi, le découpage est plus clair.
+
+### 4.7 Emplacement de profiles.yml
+
+**Choix** : Le fichier sera placé dans le repo `agribalyse/dbt_project/`, à côté de `dbt_project.yml`. Configuration en clair mais secrets avec `env_var()`.
+- **Justification** : 
+- un seul fichier au lieu de deux, donc aucun risque de désynchronisation entre mon poste et la CI
+
+### 4.8 Le rôle dbt
+
+**Choix** : dbt a un rôle `TRANSFORMAGRIBALYSE` qui détient plusieurs privilèges : 
+USAGE	DATABASE	DATABASE_AGRIBALYSE
+OWNERSHIP	FILE_FORMAT	DATABASE_AGRIBALYSE.STAGING.FF_CSV
+CREATE FILE FORMAT	SCHEMA	DATABASE_AGRIBALYSE.STAGING
+CREATE STAGE	SCHEMA	DATABASE_AGRIBALYSE.STAGING
+CREATE TABLE	SCHEMA	DATABASE_AGRIBALYSE.INTERMEDIATE
+CREATE TABLE	SCHEMA	DATABASE_AGRIBALYSE.MARTS
+CREATE TABLE	SCHEMA	DATABASE_AGRIBALYSE.STAGING
+CREATE VIEW	SCHEMA	DATABASE_AGRIBALYSE.STAGING
+USAGE	SCHEMA	DATABASE_AGRIBALYSE.INTERMEDIATE
+USAGE	SCHEMA	DATABASE_AGRIBALYSE.MARTS
+USAGE	SCHEMA	DATABASE_AGRIBALYSE.STAGING
+OWNERSHIP	STAGE	DATABASE_AGRIBALYSE.STAGING.AGRIBALYSE_STAGE
+OWNERSHIP	TABLE	DATABASE_AGRIBALYSE.STAGING.AGRIBALYSE_DETAIL_PAR_INGREDIENT
+USAGE	WAREHOUSE	WH_AGRIBALYSE
+- **Justification** : 
+- J'ai préféré ne pas laisser `ACCOUNTADMIN` car cela permet de savoir qui a fait quoi plus facilement. De plus, on ne donne pas le rôle account admin afin d'éviter d'avoir tous les rôles et de faire des choses qu'on ne devrait pas avec tous les privilèges.
+
+### 4.9 Freshness
+
+**Choix** : Pas d'utilisation de freshness
+- **Justification** : Je n'ai pas besoin de valider via le capteur (freshness) que le fichier est assez récent puisque mes données sont figées dans le temps. Sauf en cas de chargement aux deux ans (leur mise à jour), dans ce cas j'ajouterais freshness. 
+
+### 4.10 Conventions des couches
+
+**Choix** : Voici le choix pour les conventions :
+- Préfixes de couche : staging stg, intermediate int, marts dim ou fct
+- Casse des colonnes : écriture en minuscule (lower)
+- Nommage des clés : _key pour les clés techniques
+- Mesures d'impact : <indicateur>_<unité>_<dénominateur>. Voir section `Description des champs` présent ici - https://data.ademe.fr/datasets/agribalyse-31-detail-par-ingredient
+- Booléen : Aucun actuellement, sinon bool_
+- Unité dans le nom : oui
+- Matérialisation : view pour staging, table pour intermediate et marts
+
+### 4.11 Utilisation macro 
+
+**Choix** : Utilisation de la macro `generate_schema_name.sql` et du bloc `+schema:` (dbt_project.yml) pour gérer le défaut délibéré de nommage de dbt. dbt offre la concaténation par défaut mais moi je ne veux appliquer celle par défaut car il nommerait STAGING_MARTS au lieu de juste MARTS pour mon projet.
+- **Justification** : J'ai choisi la macro puisque je suis seul sinon j'aurais pu accorder `CREATE SCHEMA`et avoir `STAGING_MARTS`, `STAGING_INTERMEDIATE`. Mais étant seul, faire la macro me semble plus rapide et plus simple d'utilisation.
+
+### 4.12 Placement de la clé de substitution 
+
+**Choix** : Choix de placer la clé de substitution dans le staging.
+- **Justification** : Placer la clé ici est plus simple en même temps que le renommage. 
+
+### 4.13 FLOAT ou NUMBER
+
+**Choix** : utilisation de FLOAT dans le cadre de ce projet.
+- **Justification** : Choix d'utiliser FLOAT dans ce projet au lieu de NUMBER car cela simplifie. J'ai pas besoin d'une précision maximale dans mon projet personnel. 
+
+### 4.14 Test not_null sur staging
+
+**Choix** : tester not_null sur staging 
+- **Justification** : En cas de changement de DDL je ne saurais pas si not_null est bien appliqué sur `ciqual_agb` ainsi que sur `ingredients`. J'ai choisi donc d'ajouter un test not_null sur ces deux là, en plus de celui de ma clé technique, afin d'attraper les erreurs étant donnés que ma clé technique ce base sur eux. 
+
+### 4.15 Preuve des dépendances fonctionnelles
+
+**Contexte** : J'ai effectué une analyse, via requête, pour vérifier si les dimensions choisies étaient valide.
+
+**Méthode** : une dépendance fonctionnelle se réfute, elle ne se confirme pas.
+Motif générique :
+
+    select <clé>
+    from <table>
+    group by <clé>
+    having count(distinct <attribut>) > 1
+
+Zéro ligne = aucun contre-exemple, la dépendance tient.
+N lignes = N contre-exemples, et ces lignes indiquent où regarder.
+
+Exemple exécuté :
+
+    select ciqual_agb
+    from database_agribalyse.staging.agribalyse_detail_par_ingredient
+    group by ciqual_agb
+    having count(distinct nom_francais) > 1;
+
+**Résultats** (12 mesures, table brute, 6161 lignes, AGRIBALYSE v3.2) :
+
+| Clé                  | Attribut             | Lignes | Verdict          |
+| -------------------- | -------------------- | -----: | ---------------- |
+| ciqual_agb           | nom_francais         |      0 | tient            |
+| ciqual_agb           | lci_name             |      0 | tient            |
+| ciqual_agb           | sous_groupe_daliment |      0 | tient            |
+| ciqual_agb           | groupe_daliment      |      0 | tient            |
+| ciqual_agb           | ingredients          |   1094 | rompue           |
+| sous_groupe_daliment | groupe_daliment      |      0 | tient            |
+| lci_name             | groupe_daliment      |      0 | tient            |
+| groupe_daliment      | sous_groupe_daliment |     11 | rompue           |
+| groupe_daliment      | ingredients          |     11 | rompue           |
+| ingredients          | groupe_daliment      |    128 | rompue           |
+| lci_name             | nom_francais         |      2 | anomalie isolée  |
+| nom_francais         | lci_name             |      1 | anomalie isolée  |
+
+**Ce que ces mesures établissent** :
+On constate que la clé `ciqual_agb` attire les attributs nom_francais, lci_name, sous_groupe_daliment, groupe_daliment. Tandis qu'ingredients échappe à cette clé, ce qui signifie que ces deux-là forment mon grain. 
+sous_groupe_daliment et lci_name attire l'attribut groupe_daliment. 
+
+**Anomalies relevées, non traitées** :
+- 1 nom_francais portent plusieurs lci_name, non expliqué actuellement
+- 2 lci_name portent plusieurs nom_francais, non expliqué à ce stade
+- `Autres étapes` dans ingredients
+- 27 différences dans le minus suivant : 
+select ciqual_agb
+from database_agribalyse.staging.agribalyse_detail_par_ingredient
+minus 
+select ciqual_code
+from database_agribalyse.staging.agribalyse_detail_par_ingredient
 
 ## 5. AI in development
 
@@ -116,9 +239,9 @@ J'ai choisi de ne pas partager cela aux autres schémas (intermediate et marts) 
 - je réécris tout fichier que je ne peux pas réexpliquer le lendemain matin pour valider la rétention d'information.
 
 **Si je franchis la ligne**
-Déclencheur — je colle une commande ou un bloc de code que je ne peux pas expliquer ligne par ligne.
-Geste — je supprime ce que j'ai collé et je le réécris à la main, sans IA.
-Trace — j'ouvre une entrée ÉCART dans le journal ci-dessous, le jour même.
+Déclencheur : je colle une commande ou un bloc de code que je ne peux pas expliquer ligne par ligne.
+Geste : je supprime ce que j'ai collé et je le réécris à la main, sans IA.
+Trace : j'ouvre une entrée ÉCART dans le journal ci-dessous, le jour même.
 
 **LOGS**
 J141 — 27/07 — setup .venv + connexion dbt/Snowflake
@@ -126,3 +249,7 @@ J141 — 27/07 — setup .venv + connexion dbt/Snowflake
 - gardé : exécution des commandes et validation avant lancement
 - écart : un rm -rf proposé, enlevé à la lecture
 - check : réécriture prévue J142 — non bouclé à ce jour
+
+J143 - 29-01 - Dépendances fonctionnelles
+- délégué : explication sur cette nouveauté
+- gardé : squelette effectué par l'IA pour la décision 4.15 avec complétion par moi
