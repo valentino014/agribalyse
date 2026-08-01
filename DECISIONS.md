@@ -51,7 +51,6 @@ where ingredients is null;
 select count(distinct ciqual_agb, ingredients) from database_agribalyse.staging.agribalyse_detail_par_ingredient;
 ```
 Nous donne 6161 enregistrements soit autant que le CSV. La clé composite est donc parfaite ici puisqu'il y a une égalité entre COUNT(*) et count(DISTINCT ciqual_agb, ingredients).
-
  
 **Non applicable par le SGBD**
 Snowflake ne tient pas compte des `PRIMARY KEY` → l'unicité est garantie par `dbt_utils.unique_combination_of_columns`, pas par le DDL.
@@ -60,6 +59,26 @@ En revanche, le DDL a bien `NOT NULL` sur les deux clés (ciqual_agb et ingredie
 **Grain alternatif écarté**
 - Une ligne par `ciqual_agb` écartée car cela va nous faire perdre les ingrédients, on ne pourra donc pas répondre à des questions d'analyse comme « les ingrédients ont-ils le même impact environnemental selon le produit».
 - Une ligne par `ingredients` écartée car on se retrouve avec les ingrédients mais pas pour chaque produit, on ne pourra pas répondre à la question « quel produit est le plus polluant ».
+
+### 3.2 Matérialisation 
+
+**Choix** :  Modélisation en star schéma
+- **Justification** : J'ai opté pour la modélisation en star schéma même s'il y a une redondance car le coût est quasi nul et cela supprime une jointure.
+
+### 3.3 Gestion de `Autres étapes`
+
+**Choix** : Garder `Autres étapes` directement dans la dimension dim_ingredient.
+- **Justification** : J'ai 1099/6161 de fois l'élément qui revient soit 17,8%. Il est présent dans chaque produit, il s'agit donc d'une composante du cycle de vie du produit. Je décide donc de le garder.
+J'assume le fait que la dimension des ingrédients contiendra une ligne qui n'en est pas un à proprement parler.
+
+### 3.4 Application du `sum()` sur les mesures
+
+**Choix** : Avec la modélisation choisie, le sum n'aura pas le même sens dépendamment de la dimension
+- **Justification** : On constate donc deux choses avec les deux dimensions. 
+La première, sommer sur ingrédient a du sens, puisqu'il s'agit du même produit sur lequel on somme et donc le fait de sommer 1/kg + 2/kg = 3/kg a du sens. 
+En revanche, faire une somme sur les produits n'a pas de sens. Sommer 1/kg sur des yaourts et 2/kg sur des steaks n'a plus de sens, puisque le ratio par kg perd tout son sens. Nous aurions 3, non pas par kg, mais pour 2kg finalement. Il s'agit donc d'une mesure semi-additive selon la dimension produit. 
+Pour conclure, n'ayant pas de dénominateur dans les 24 colonnes, l'application de Kimball standard n'était pas disponible. Il aurait donc fallu que le csv ait stocké le numérateur (chiffre) dans une colonne et le dénominateur (mesure) dans une autre.
+
 
 ## 4. Décisions techniques
 
@@ -144,7 +163,7 @@ USAGE	WAREHOUSE	WH_AGRIBALYSE
 - Mesures d'impact : <indicateur>_<unité>_<dénominateur>. Voir section `Description des champs` présent ici - https://data.ademe.fr/datasets/agribalyse-31-detail-par-ingredient
 - Booléen : Aucun actuellement, sinon bool_
 - Unité dans le nom : oui
-- Matérialisation : view pour staging, table pour intermediate et marts
+- Matérialisation : view pour staging, table pour intermediate et marts. Pas d'incremental car je n'ai que 6000 lignes, alors qu'incremental est utile sur des grosses tables. 
 
 ### 4.11 Utilisation macro 
 
@@ -219,6 +238,15 @@ from database_agribalyse.staging.agribalyse_detail_par_ingredient
 minus 
 select ciqual_code
 from database_agribalyse.staging.agribalyse_detail_par_ingredient
+
+**Choix** : tester not_null sur staging 
+- **Justification** : En cas de changement de DDL je ne saurais pas si not_null est bien appliqué sur `ciqual_agb` ainsi que sur `ingredients`. J'ai choisi donc d'ajouter un test not_null sur ces deux là, en plus de celui de ma clé technique, afin d'attraper les erreurs étant donnés que ma clé technique ce base sur eux. 
+
+### 4.16 Gestion de la CI
+
+**Choix** : Modifier la macro `generate_schema_name.sql` pour gérer l'écriture de l'environnement CI 
+- **Justification** : J'ai fait le choix de modifier la macro afin que les 2 environnements n'écrivent pas dans le même schéma. Il a donc fallu préfixer par target.name dans la branche else de la macro. J'aurais pu préfixer dans le profil mais cela n'aurait pas suffi car tous mes modèles ont un `schema:` donc on ne rentre jamais dans `custom_schema_name is none`. Donc ne lit jamais le target.schema.
+En revanche, cela m'oblige à créer 4 schémas et grant.
 
 ## 5. AI in development
 

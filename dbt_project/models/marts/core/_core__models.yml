@@ -1,0 +1,70 @@
+version: 2
+
+models:
+  - name: dim_produit
+    description: "{{ doc('dim_produit_doc') }}"
+    columns:
+      - name: ciqual_agb_key
+        description: "Clé de substitution calculée par hachage sur ciqual_agb. Une valeur = un produit. 1099 valeurs distinctes, unicité testée."
+        data_tests:
+          - unique
+          - not_null
+      - name: ciqual_agb
+        description: "Identifiant agb provenant de ADEME."
+        data_tests:
+          - unique
+          - not_null
+      - name: nom_francais
+        description: "Nom du produit"
+        data_tests:
+          - not_null
+      - name: lci_name
+        description: "Nom du produit en anglais"
+        data_tests:
+          - not_null
+      - name: sous_groupe_daliment
+        description: "Sous-groupe du produit"
+        data_tests:
+          - not_null
+      - name: groupe_daliment
+        description: "Groupe du produit"
+        data_tests:
+          - not_null
+
+  - name: dim_ingredient
+    description: "{{ doc('dim_ingredient_doc') }}"
+    columns:
+      - name: ingredients
+        description: "Ingrédient d'un produit"
+        data_tests:
+          - unique
+          - not_null
+      - name: ingredient_key
+        description: "Clé de substitution calculée par hachage sur ingredients. Une valeur = un ingrédient. 287 valeurs distinctes, unicité testée."
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_agribalyse
+    description: "{{ doc('fct_agribalyse_doc') }}"
+    columns:
+      - name: ciqual_agb
+        description: "Clé naturelle venant de la source ADEME. Présente pour le confort de lecture."
+      - name: ingredients
+        description: "Clé naturelle venant de la source ADEME. Présent pour le confort de lecture sans jointure."
+      - name: ciqual_agb_key
+        description: "Clé étrangère calculée par hachage dans la dimension produit. La table a 6161 lignes réparties sur 1099 valeurs distinctes, relation testée."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_produit')
+                field: ciqual_agb_key
+      - name: ingredient_key
+        description: "Clé étrangère calculée par hachage dans la dimension ingrédient. La table a 6161 lignes réparties sur 287 valeurs distinctes, relation testée."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_ingredient')
+                field: ingredient_key
