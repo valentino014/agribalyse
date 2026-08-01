@@ -1,0 +1,38 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  dbt-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./dbt_project
+    env:
+      SNOW_ACCOUNT: ${{ vars.SNOW_ACCOUNT }}
+      SNOW_USER: ${{ vars.SNOW_USER }}
+      SNOW_PASSWORD: ${{ secrets.SNOW_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Déclenché par ${{ github.event_name }}"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10.12"
+      - run: pip install -r ../requirements.txt
+      - run: dbt --version
+      - run: dbt deps
+      - run: dbt debug --target ci
+        env:
+          SNOW_ACCOUNT: ${{ vars.SNOW_ACCOUNT }}
+          SNOW_USER: ${{ vars.SNOW_USER }}
+          SNOW_PASSWORD: ${{ secrets.SNOW_PASSWORD }}
+      - name: dbt build 
+        run: dbt build --target ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dbt-target
+          path: dbt_project/target/   

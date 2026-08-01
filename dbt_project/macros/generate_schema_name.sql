@@ -3,6 +3,10 @@
     {%- if custom_schema_name is none -%}
         {{ default_schema }}
     {%- else -%}
-        {{ custom_schema_name | trim }}
+        {%- if target.name == 'dev' -%}
+            {{ custom_schema_name | trim }}
+        {%- else -%}
+            {{ target.name }}_{{ custom_schema_name | trim }}
+        {%- endif -%}
     {%- endif -%}
 {%- endmacro %}

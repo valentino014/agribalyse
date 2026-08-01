@@ -13,7 +13,7 @@ models:
         data_tests:
           - not_null
       - name: agb_ingredients_key
-        description: "Clé technique unique"
+        description: "Clé de substitution calculée par hachage sur ciqual_agb + ingredients. Une valeur = un couple produit/ingrédient. 6161 valeurs distinctes, unicité testée."
         data_tests:
           - unique
           - not_null

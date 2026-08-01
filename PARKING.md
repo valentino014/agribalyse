@@ -2,3 +2,5 @@ PARKING.md : - [J141] dbt debug échoue au login Snowflake | env + squelette OK,
 
 PARKING.md : - [J143] à regarder. hors T3 : les 27 du MINUS, les 2 et le 1, Autres étapes dans ingredients.
 FInir décisions 4.15
+
+préparer entretiens : à ouvrir au lancement de la campagne
