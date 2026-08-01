@@ -24,9 +24,6 @@ venv/
 *.csv
 !dbt_project/seeds/*.csv
 
-# Secrets
-profiles.yml
-
 # dbt
 logs/
 target/
