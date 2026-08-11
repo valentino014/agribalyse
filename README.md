@@ -38,8 +38,7 @@ Sur ce projet :
 - **Environnement** : Le runner exécute dbt, qui se connecte à mon compte Snowflake, et l'isolation vient de la cible ci (schémas préfixés).
 - **Build + Tests** : `dbt deps` installe les dépendances, puis `dbt build` construit les modèles dans l'ordre du DAG en lançant data tests. Le pipeline s'arrête au premier échec rencontré.
 - **Traçabilité** : Les artefacts dbt (`manifest.json`, logs) sont conservés à chaque run.
-- **Nota Bene** : Contrairement au projet 1 je n'ai pas ajouté de Slim CI.Pour ajoute cela il faudrait un manifest de référence ainsi que state:modified+ et --defer. Ayant que 6161 lignes, un build complet est négligeable. 
-
+- **Nota Bene** : Contrairement au projet 1 je n'ai pas ajouté de Slim CI.Pour ajoute cela il faudrait un manifest de référence, donc state:modified+ et --defer. Ayant que 6161 lignes, un build complet est négligeable. 
 
 ## Réconciliation
 

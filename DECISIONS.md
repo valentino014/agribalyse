@@ -79,6 +79,10 @@ La première, sommer sur ingrédient a du sens, puisqu'il s'agit du même produi
 En revanche, faire une somme sur les produits n'a pas de sens. Sommer 1/kg sur des yaourts et 2/kg sur des steaks n'a plus de sens, puisque le ratio par kg perd tout son sens. Nous aurions 3, non pas par kg, mais pour 2kg finalement. Il s'agit donc d'une mesure semi-additive selon la dimension produit. 
 Pour conclure, n'ayant pas de dénominateur dans les 24 colonnes, l'application de Kimball standard n'était pas disponible. Il aurait donc fallu que le csv ait stocké le numérateur (chiffre) dans une colonne et le dénominateur (mesure) dans une autre.
 
+### 3.5 Ajouter la date du jeu de données pour la gestion de la date MetricFlow
+
+**Choix** : MetricFlow a besoin d'une date dans la dimension. Cependant, mon jeu de données n'en a pas. J'ai donc choisi d'ajouter la date de mise à jour du jeu de données.
+- **Justification** : Sans cela MetricFlow ne fonctionne pas. Et j'ai choisi le date du millésime de mes données au lieu de choisir une date au hasard. Aucune métrique temporelle n'est possible sur ce modèle.
 
 ## 4. Décisions techniques
 
@@ -247,6 +251,16 @@ from database_agribalyse.staging.agribalyse_detail_par_ingredient
 **Choix** : Modifier la macro `generate_schema_name.sql` pour gérer l'écriture de l'environnement CI 
 - **Justification** : J'ai fait le choix de modifier la macro afin que les 2 environnements n'écrivent pas dans le même schéma. Il a donc fallu préfixer par target.name dans la branche else de la macro. J'aurais pu préfixer dans le profil mais cela n'aurait pas suffi car tous mes modèles ont un `schema:` donc on ne rentre jamais dans `custom_schema_name is none`. Donc ne lit jamais le target.schema.
 En revanche, cela m'oblige à créer 4 schémas et grant.
+
+### 4.17 Trancher l'ingrédient `Autres étapes`
+
+**Contexte** : Je dois savoir à quoi l'ingrédient `Autres étapes` fait référence.
+
+**décision** : J'ai choisi de les laisser inclus dans les ingrédients au final puisque je n'ai rien vu dans la documentation pouvant répondre à la question. Pour tester, j'ai regardé ce que `Autres étapes` représente dans le  total des `score_unique_ef_mpt_par_kg_produit` (117.8 par kg/506.7 par kg), ce qui est tout de même conséquent car cela représente 23%. J'ai donc choisi de l'inclure pour ne pas perdre trop de données.
+
+**alternatives écartées** : Je pourrais intégrer un autre jeu de données Agribalyse pour répondre à la question, cependant je ne le fais pas par manque de temps. Je choisis donc de ne pas l'exclure ni de l'isoler.
+
+**conséquence** : Je n'ai pas la certitude de ce que cet élément implique. Si plus tard je charge le fichier je pourrais alors mieux définir de ce qu'il s'agit. 
 
 ## 5. AI in development
 
