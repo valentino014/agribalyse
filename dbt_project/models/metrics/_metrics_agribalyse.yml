@@ -1,0 +1,20 @@
+metrics:
+  - name: nb_produit_distinct
+    label: Nombre de produit
+    description: Nombre de produit distinct.
+    type: simple
+    type_params:
+      measure: nb_produit
+  - name: somme_score_unique_ef_par_kg_de_produit
+    label: Somme score unique
+    description: Somme de score unique ef par kg de produit.
+    type: simple
+    type_params:
+      measure: somme_score_unique_ef_par_kg_produit
+  - name: ratio_score_unique_ef_par_kg_produit_par_nb_produit
+    label: Ratio de score unique par nombre de produit
+    description: Ratio de score unique ef calculé par kg par nombre de produit.
+    type: ratio
+    type_params:
+      numerator: somme_score_unique_ef_par_kg_de_produit
+      denominator: nb_produit_distinct

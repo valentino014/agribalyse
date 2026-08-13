@@ -1,5 +1,6 @@
 
 SELECT 
+    agb_ingredients_key,
     stg.ciqual_agb,
     stg.ingredients,
     dim_p.ciqual_agb_key,

@@ -34,9 +34,10 @@ models:
     staging:
       +schema: STAGING
       +materialized: view
-    intermediate:
-      +schema: INTERMEDIATE
-      +materialized: view
+    # couche intermediate prévue, non implémentée à ce jour
+    # intermediate:
+    #   +schema: INTERMEDIATE
+    #   +materialized: view
     marts:
       +schema: MARTS
       +materialized: table 
