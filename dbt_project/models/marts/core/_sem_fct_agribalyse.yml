@@ -24,8 +24,42 @@ semantic_models:
       - name: ingredients
         type: categorical
     measures:
-      - name: moyenne_non_ponderee_score_unique_ef
-        description: Moyenne des scores uniques ef par micro particule par kg de produit.
-        agg: average
+      - name: nb_produit
+        description: Nombre de produit distinct.
+        agg: count_distinct
+        expr: ciqual_agb
+      - name: somme_score_unique_ef_par_kg_produit
+        description: Somme de score unique ef par kg de produit.
+        agg: sum
         expr: score_unique_ef_mpt_par_kg_produit
-        create_metric: true
+# semantic_models:
+#   - name: agribalyse
+#     description: Une ligne par ingredient que contient un produit.
+#     model: ref('fct_agribalyse')
+#     defaults:
+#       agg_time_dimension: date_edition
+#     entities:
+#       - name: sk_agb_ingredients_key       # clé primaire de la table
+#         type: primary
+#         expr: agb_ingredients_key
+#       - name: ciqual_agb     # clé étrangère vers dim_produit
+#         type: foreign
+#         expr: ciqual_agb_key
+#       - name: ingredient     # clé étrangère vers dim_ingredient
+#         type: foreign
+#         expr: ingredient_key
+#     dimensions:
+#       - name: date_edition
+#         description: Date d'édition de la dernière mise à jour Agribalyse (v3.2). Il s'agit d'une photo du jeu de données à un instant T. 
+#         type: time
+#         expr: cast('2025-02-27' as date)
+#         type_params:
+#           time_granularity: day
+#       - name: ingredients
+#         type: categorical
+#     measures:
+#       - name: moyenne_non_ponderee_score_unique_ef
+#         description: Moyenne des scores uniques ef par micro particule par kg de produit.
+#         agg: average
+#         expr: score_unique_ef_mpt_par_kg_produit
+#         create_metric: true
