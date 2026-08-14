@@ -4,12 +4,12 @@ agribalyse:
     dev:
       type: snowflake
 
-      # secrets — viennent du .env en local, de GitHub Secrets en CI
+      # secrets : viennent du .env en local, de GitHub Secrets en CI
       account: "{{ env_var('SNOW_ACCOUNT') }}"
       user: "{{ env_var('SNOW_USER') }}"
       password: "{{ env_var('SNOW_PASSWORD') }}"
 
-      # configuration — en clair, à compléter
+      # configuration
       role: TRANSFORMAGRIBALYSE
       warehouse: WH_AGRIBALYSE
       database: DATABASE_AGRIBALYSE
@@ -22,12 +22,12 @@ agribalyse:
     ci:
       type: snowflake
 
-      # secrets — viennent du .env en local, de GitHub Secrets en CI
+      # secrets : viennent du .env en local, de GitHub Secrets en CI
       account: "{{ env_var('SNOW_ACCOUNT') }}"
       user: "{{ env_var('SNOW_USER') }}"
       password: "{{ env_var('SNOW_PASSWORD') }}"
 
-      # configuration — en clair, à compléter
+      # configuration : en clair, à compléter
       role: TRANSFORMAGRIBALYSE
       warehouse: WH_AGRIBALYSE
       database: DATABASE_AGRIBALYSE
