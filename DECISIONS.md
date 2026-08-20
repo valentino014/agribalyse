@@ -84,6 +84,44 @@ Pour conclure, n'ayant pas de dénominateur dans les 24 colonnes, l'application 
 **Choix** : MetricFlow a besoin d'une date dans la dimension. Cependant, mon jeu de données n'en a pas. J'ai donc choisi d'ajouter la date de mise à jour du jeu de données.
 - **Justification** : Sans cela MetricFlow ne fonctionne pas. Et j'ai choisi le date du millésime de mes données au lieu de choisir une date au hasard. Aucune métrique temporelle n'est possible sur ce modèle.
 
+## 3.6 Le score est-il réparti entre les ingrédients ou recopié sur chaque ligne ?
+
+- **Contexte** : Dans ma table on a une ligne par produit × ingrédient. Ma mesure va effectuer une somme du score et ma métrique divise cette somme par le nombre de produits. Si toutes les lignes portaient le score total du produit, la somme le compterait plusieurs fois et la métrique serait fausse sans qu'aucun test ne devienne rouge. J'aurais donc bien une donnée mais pas fiable du tout. 
+
+- **Décision** : Il n'y a pas de double comptage, le score est réparti entre les ingrédients, la métrique ratio est validée en l'état.
+
+- **Preuve** :
+Test 1 : 
+
+```sql
+select ciqual_agb, count(*), min(score_unique_ef_mpt_par_kg_produit), max(score_unique_ef_mpt_par_kg_produit) 
+from fct_agribalyse 
+group by ciqual_agb
+having min(score_unique_ef_mpt_par_kg_produit) = max(score_unique_ef_mpt_par_kg_produit) 
+AND count(*) > 1;
+```
+
+Cette requête me renvoie 0 ligne. Ce qui signifie que je n'ai aucune ligne où min et max sont semblables. Donc aucun produit n'a la même valeur sur toutes ses lignes, donc le score n'est jamais recopié. Je note aussi que sans le min et max j'ai plein de ligne ce qui prouve que la condition est utile. 
+
+Test 2 :
+
+```sql
+select dpr.nom_francais, fa.ciqual_agb, sum(score_unique_ef_mpt_par_kg_produit) somme_score_ef_par_kg_produit
+from fct_agribalyse fa
+left join dim_produit dpr on fa.ciqual_agb_key = dpr.ciqual_agb_key 
+where fa.ciqual_agb = '1031'
+group by fa.ciqual_agb, dpr.nom_francais;
+```
+
+Cette requête me donne la somme du produit 1031 soit 0.5157. Ensuite, j'ai validé avec les données agribalyse (https://data.ademe.fr/datasets/agribalyse-31-synthese) la somme du produit 1031 et j'obtient 0.516 dans la cellule. 
+L'écart est de 0,05 % ce qui est moins de 1% ce qui signifie qu'il s'agit d'un écart d'arrondi simplement. Tolérance fixée avant de regarder : moins de 1 % = égal, plus de 5 % = différent.
+
+
+
+- **Conséquence** :
+La métrique ratio se lit en mPt par produit. Chacun des produit ne compte que pour 1, qu'il y ait 2 lignes ou 20 pour un produit. 
+Elle n'a de sens que sur un groupe de produits, pas sur un produit unique. 
+
 ## 4. Décisions techniques
 
 ### 4.1 Choix du Trial Snowflake
