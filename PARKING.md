@@ -32,3 +32,26 @@ Passage de nettoyage, un seul coup : la ligne Metabase de « Limites et pistes �
 Millésime : le README dit 3.2, le fichier s'appelle -31-. À vérifier contre la date de ta dimension constante. Si les deux divergent, l'un des deux ment.
 
 Le diagramme d'architecture s'arrête à « BI » et la couche sémantique n'y est pas.
+
+
+
+
+
+## J169 — README v2, restes
+- [ ] Métriques : recopier les 3 noms exacts depuis le YAML sémantique
+      (celui du README ne colle pas à l'affichage Metabase)
+- [ ] Métriques : unité 2 et 3 = mPt/kg ; la 3 est une moyenne, pas un ratio
+- [ ] Métriques : périmètre de la somme + une ligne sous la capture
+- [ ] Architecture : la phrase d'une ligne (entre / transforme / sort)
+- [ ] Architecture : MetricFlow dans le schéma (dbt va direct à Metabase aujourd'hui)
+- [ ] 3 premières lignes : présent · Snowflake + étoile nommés · CSV, pas "le site"
+- [ ] Stack : MetricFlow (pip show dbt-metricflow) · Metabase (image Docker)
+      · doublon pandas · postgres à retirer
+- [ ] Section "AI in development" : 5 lignes + retirer la référence aux LOGS supprimés
+- [ ] dbt-core 1.11.7 → 1.12.3 : pas maintenant, décision à part
+
+## J169 — premier acte, si non fait
+- [ ] carte Snowflake · resource monitor avec seuil SUSPEND · courrier CAF
+
+## J170 - 
+- [ ] deck Anki · carte Snowflake + resource monitor

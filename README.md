@@ -2,9 +2,11 @@
 
 # agribalyse — Analytics dbt
 
-Projet dbt sur les données agribalyse, millésime 3.2 du 27 février 2025, fichier distribué sous le nom agribalyse-31-detail-par-ingredient.csv.
+Ce dépôt contient le code qui transfère un fichier de données dans Snowflake après avoir créé la BD Snowflake, ainsi que les droits s'y rattachant. Il y a également dans ce dépôt un projet dbt qui va permettre d'analyser les données via une modélisation (schéma en étoile) et de la documentation pour expliquer les choix tout au long du processus. Ce projet nous fournit en sortie une visualisation des données Agribalyse via Metabase.
 
-Agribalyse est une base de données qui indique l'impact environnemental des produits agricoles qui sont produits ou consommés en France. Elle a pour but de soutenir la transition environnementale des systèmes agricoles et alimentaires.
+Agribalyse est une base de données qui indique l'impact environnemental des produits alimentaires tels que consommés en France. Elle a pour but de soutenir la transition environnementale des systèmes agricoles et alimentaires.
+
+Projet dbt sur les données AGRIBALYSE, millésime 3.2 du 27 février 2025, fichier distribué sous le nom agribalyse-31-detail-par-ingredient.csv.
 
 **Source** : https://data.ademe.fr/datasets/agribalyse-31-detail-par-ingredient
 
@@ -12,19 +14,22 @@ Agribalyse est une base de données qui indique l'impact environnemental des pro
 
 - Python 3.10.12 (pandas)
 - dbt Core 1.11.7
-- Snowflake 1.12.0 (plugin)
+- dbt-snowflake 1.12.0 (plugin)
+- Metabase
+- MetricFlow
 
 ## Structure du projet
 
-- `data/`                  Données brutes téléchargées (CSV de ADEME)
-- `exploration.md`         Script d'exploration du dataset
-- `01_setup.sql`           Script sql pour le setup dans Snowflake  
-- `02_load.py`             Transfert du CSV local téléchargé manuellement depuis ADEME vers Snowflake
-- `requirements.txt`       Dépendances Python
-- `docs`                   Documentations 
-- `dbt_project`            Projet dbt
-- `DECISIONS.md`           Documentation sur les décisions prise dans ce projet
-- `PARKING.md`             Documentation des éléments pas terminés
+- `data/`                       Données brutes téléchargées (CSV de ADEME)
+- `exploration.md`              Fichier d'exploration du dataset
+- `01_setup.sql`                Script sql pour le setup dans Snowflake  
+- `02_load.py`                  Transfert du CSV local téléchargé manuellement depuis ADEME vers Snowflake
+- `requirements.txt`            Dépendances Python
+- `docs`                        Documentation 
+- `dbt_project`                 Projet dbt
+- `DECISIONS.md`                Documentation sur les décisions prises dans ce projet
+- `PARKING.md`                  Documentation des éléments pas terminés
+- `.github/workflows/ci.yml`    Intégration continue
 
 ## Installation
 
@@ -39,7 +44,7 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
-2. Installer les dépendances:
+2. Installer les dépendances :
 ```bash
 pip install -r requirements.txt
 ```
@@ -59,7 +64,7 @@ cp .env.example .env
 ```bash
 python3 02_load.py
 ```
-Ce script lit `data/agribalyse-31-detail-par-ingredient.csv` et suit les étapes suivante :
+Ce script lit `data/agribalyse-31-detail-par-ingredient.csv` et suit les étapes suivantes :
 PUT → stage interne → COPY INTO dans la table `DATABASE_AGRIBALYSE.STAGING.AGRIBALYSE_DETAIL_PAR_INGREDIENT` de Snowflake (peut prendre quelques minutes).
 
 7. Installer les packages dbt :
@@ -86,22 +91,24 @@ left join dim_produit dpr on fa.ciqual_agb_key = dpr.ciqual_agb_key
 group by fa.ciqual_agb, dpr.nom_francais;
 ```
 
-## Les métriques
+## Métriques 
 
-- nb_produit_distinct : Donne le nombre total de produit.
-- somme_score_unique_ef_par_kg_de_produit : somme total du score unique par kg de produit.
-- ratio_score_unique_ef_par_kg_produit_par_nb_produit : ratio des score unique par kg de produit diviser par le nombre de produit.
+| Nom                                        		    | Ce qu'elle mesure     	    	            | Unité        		           |
+| ----------------------------------------------------- | --------------------------------------------- | ---------------------------- |
+| nb_produit_distinct			       		            | Produits distincts     	    	            | Produit      		           |
+| somme_score_unique_ef_par_kg_de_produit      		    | La somme des scores uniques par kg de produit | mpt par kg de produit 	   | 
+| ratio_score_unique_ef_par_kg_produit_par_nb_produit   | Le score unique par nombre de produit         | mpt par produit   		   |
 
 ![Top 10 des produits par score EF](docs/metabase_top10.png)
 
 ## Contrôles d'intégration (CI/CD)
 
-Un pipeline GitHub Actions va valider automatiquement le projet à chaque changement. Il va reconstruire l'ensemble des modèles dbt et effectuer les tests (métier et d'intégrité) sur une machine (runner github) reconstruite à chaque fois. Si une étape échoue, le pipeline empêche le merge donc main reste propre.
+Un pipeline GitHub Actions va valider automatiquement le projet à chaque changement. Il va reconstruire l'ensemble des modèles dbt et effectuer les tests (métier et d'intégrité) sur une machine (runner GitHub) reconstruite à chaque fois. Si une étape échoue, le pipeline empêche le merge donc main reste propre.
 
 Sur ce projet :
 - **Déclencheur** : Sur *pull request* (valider avant le merge) et sur *push* vers `main` (rejouer après le merge).
 - **Environnement** : Le runner exécute dbt, qui se connecte à mon compte Snowflake, et l'isolation vient de la cible ci (schémas préfixés).
-- **Build + Tests** : `dbt deps` installe les dépendances, puis `dbt build` construit les modèles dans l'ordre du DAG en lançant data tests. Le job finit rouge en cas d'échec rencontré.
+- **Build + Tests** : `dbt deps` installe les dépendances, puis `dbt build` construit les modèles dans l'ordre du DAG en lançant les data tests. Le job finit rouge en cas d'échec.
 - **Traçabilité** : Les artefacts dbt (`manifest.json`, logs) sont conservés à chaque run.
 - **Nota Bene** : Contrairement au projet 1 je n'ai pas ajouté de Slim CI. Pour l'ajouter il faudrait un manifest de référence, donc state:modified+ et --defer. Avec seulement 6161 lignes, un build complet est négligeable. 
 
@@ -118,18 +125,39 @@ On ne perd ni ne crée aucune donnée.
 
 ## Limites et pistes
 
-- Ratio score/nb_produit : double comptage ou pas ? Vérifier qu'un produit connu somme à son score publié. Le décalage de grain n'est pas le problème.
 - expr: ciqual_agb dans la mesure nb_produit : vérifier si c'est la clé naturelle ou une résolution accidentelle. Aligner ou justifier.
 - Regroupement lisible par produit — route A (dimension catégorielle sur le fait, donne 11182) ou route B (semantic model sur dim_produit, donne nom_francais). À trancher.
 - Semantic model sur dim_ingredient.
 - Colonne eau + les autres colonnes d'impact.
 - Warning --show-all.
 
+## AI in development
 
+**Outils** : assistants IA (clarification de concepts, décodage d'erreurs, relecture).
 
-Questions Metabase groupées sur codes, pas sur libellés. Choisir le mécanisme de jointure.
+**Ce que je laisse à l'IA**
+- expliquer un concept Snowflake/dbt que je ne connais pas encore
+- m'orienter vers la bonne page de documentation
+- relire mon code et signaler bugs/incohérences
+- utilisation pour setup/config de .venv et connexion snowflake via dbt
+
+**Ce que je ne laisse JAMAIS à l'IA**
+- l'écriture de mon SQL, YAML, Python, workflows CI
+- le choix du grain, des métriques, de la modélisation dims/faits
+- le clustering/partitioning
+
+**Mon check** : 
+- je réécris tout fichier que je ne peux pas réexpliquer le lendemain matin pour valider la rétention d'information.
+
+**Si je franchis la ligne**
+Déclencheur : je colle une commande ou un bloc de code que je ne peux pas expliquer ligne par ligne.
+Geste : je supprime ce que j'ai collé et je le réécris à la main, sans IA.
+
 
 ## Schéma en étoile 
+
+Une ligne représente un ingrédient que contient un produit.
+Détail et justification : DECISIONS.md § 3.1
 
 ```mermaid
 erDiagram
@@ -176,6 +204,10 @@ erDiagram
 
 ## Architecture 
 
+Architecture du projet agribalyse qui montre les différentes étapes du projet.
+
+source → chargement (Python, Snowflake) → transformation (dbt) → qui va fournir la couche sémantique (MetricFlow) et la restitution (Metabase)
+
 ```mermaid
 flowchart LR
     A["CSV ADEME<br/>Agribalyse"]
@@ -183,15 +215,16 @@ flowchart LR
     subgraph LOCAL["Poste local / CI"]
         B["Script Python"]
         F["dbt Core"]
+        I["MetricFlow"]
     end
 
     subgraph SF["Snowflake"]
         C["Stage interne<br/>(fichiers)"]
-        E["Table brute<br/>schéma STAGING"]
+        E["Table brute<br/>schéma STAGING (schéma Snowflake)"]
         G["Modèles dbt<br/>staging → marts"]
     end
 
-    H["BI"]
+    H["Metabase"]
 
     A --> B
     B -->|PUT| C
@@ -199,6 +232,7 @@ flowchart LR
     E --> G
     F -.->|exécute le SQL| G
     G --> H
+    I -.->|interroge| G
 ```
 
 ## Documentation
@@ -211,4 +245,4 @@ La chaîne complète, de la source ADEME aux 3 métriques : staging → dimensio
 
 - Mise en place de la connexion Snowflake pour transférer les données du csv vers le staging.
 - Structuration d'un projet dbt séparant données brutes et modélisation 
-- Ajout de test pour valider les données
+- Ajout de tests pour valider les données
