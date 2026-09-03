@@ -55,3 +55,9 @@ Le diagramme d'architecture s'arrête à « BI » et la couche sémantique n'y e
 
 ## J170 - 
 - [ ] deck Anki · carte Snowflake + resource monitor
+
+
+
+facture Snowflake 20 $ — vérifier l'existence d'une facture
+COMPUTE_WH hors monitor
+PAT + network policy : local OK / CI → étudier la paire de clés
