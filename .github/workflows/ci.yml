@@ -30,7 +30,6 @@ jobs:
           printf '%s' "$SNOW_PRIVATE_KEY" > "$SNOW_PRIVATE_KEY_PATH"
           chmod 600 "$SNOW_PRIVATE_KEY_PATH"
           head -1 "$SNOW_PRIVATE_KEY_PATH"
-          echo "chemin=$SNOW_PRIVATE_KEY_PATH"
       - run: dbt debug --target ci
       - name: dbt build 
         run: dbt build --target ci
