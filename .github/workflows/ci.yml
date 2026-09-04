@@ -13,8 +13,8 @@ jobs:
         working-directory: ./dbt_project
     env:
       SNOW_ACCOUNT: ${{ vars.SNOW_ACCOUNT }}
-      SNOW_USER: ${{ vars.SNOW_USER }}
-      SNOW_PASSWORD: ${{ secrets.SNOW_PASSWORD }}
+      SNOW_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_CI_PRIVATE_KEY }}
+      SNOW_PRIVATE_KEY_PATH: /tmp/sf_ci.p8
     steps:
       - uses: actions/checkout@v4
       - run: echo "Déclenché par ${{ github.event_name }}"
@@ -24,11 +24,14 @@ jobs:
       - run: pip install -r ../requirements.txt
       - run: dbt --version
       - run: dbt deps
+      - name: Écrire la clé privée 
+        run: |
+          # préserver les retours à la ligne
+          printf '%s' "$SNOW_PRIVATE_KEY" > "$SNOW_PRIVATE_KEY_PATH"
+          chmod 600 "$SNOW_PRIVATE_KEY_PATH"
+          head -1 "$SNOW_PRIVATE_KEY_PATH"
+          echo "chemin=$SNOW_PRIVATE_KEY_PATH"
       - run: dbt debug --target ci
-        env:
-          SNOW_ACCOUNT: ${{ vars.SNOW_ACCOUNT }}
-          SNOW_USER: ${{ vars.SNOW_USER }}
-          SNOW_PASSWORD: ${{ secrets.SNOW_PASSWORD }}
       - name: dbt build 
         run: dbt build --target ci
       - uses: actions/upload-artifact@v4
