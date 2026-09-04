@@ -300,36 +300,3 @@ En revanche, cela m'oblige à créer 4 schémas et grant.
 
 **conséquence** : Je n'ai pas la certitude de ce que cet élément implique. Si plus tard je charge le fichier je pourrais alors mieux définir de ce qu'il s'agit. 
 
-## 5. AI in development
-
-**Outils** : assistants IA (clarification de concepts, décodage d'erreurs, relecture).
-
-**Ce que je laisse à l'IA**
-- expliquer un concept Snowflake/dbt que je ne connais pas encore
-- m'orienter vers la bonne page de documentation
-- relire mon code et signaler bugs/incohérences
-- utilisation pour setup/config de .venv et connexion snowflake via dbt
-
-**Ce que je ne laisse JAMAIS à l'IA**
-- l'écriture de mon SQL, YAML, Python, workflows CI
-- le choix du grain, des métriques, de la modélisation dims/faits
-- le clustering/partitioning
-
-**Mon check** : 
-- je réécris tout fichier que je ne peux pas réexpliquer le lendemain matin pour valider la rétention d'information.
-
-**Si je franchis la ligne**
-Déclencheur : je colle une commande ou un bloc de code que je ne peux pas expliquer ligne par ligne.
-Geste : je supprime ce que j'ai collé et je le réécris à la main, sans IA.
-Trace : j'ouvre une entrée ÉCART dans le journal ci-dessous, le jour même.
-
-**LOGS**
-J141 — 27/07 — setup .venv + connexion dbt/Snowflake
-- délégué : diagnostic d'un conflit venv/apt lié à la configuration de mon poste
-- gardé : exécution des commandes et validation avant lancement
-- écart : un rm -rf proposé, enlevé à la lecture
-- check : réécriture prévue J142 — non bouclé à ce jour
-
-J143 - 29-01 - Dépendances fonctionnelles
-- délégué : explication sur cette nouveauté
-- gardé : squelette effectué par l'IA pour la décision 4.15 avec complétion par moi

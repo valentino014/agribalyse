@@ -4,10 +4,11 @@ agribalyse:
     dev:
       type: snowflake
 
-      # secrets : viennent du .env en local, de GitHub Secrets en CI
+      # Pas de password, on passe par private key
       account: "{{ env_var('SNOW_ACCOUNT') }}"
       user: "{{ env_var('SNOW_USER') }}"
-      password: "{{ env_var('SNOW_PASSWORD') }}"
+      private_key_path: "/home/valentin/.snowflake/sf_local.p8"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE') }}"
 
       # configuration
       role: TRANSFORMAGRIBALYSE
@@ -22,15 +23,39 @@ agribalyse:
     ci:
       type: snowflake
 
-      # secrets : viennent du .env en local, de GitHub Secrets en CI
+      # Pas de password, on passe par private key
       account: "{{ env_var('SNOW_ACCOUNT') }}"
-      user: "{{ env_var('SNOW_USER') }}"
-      password: "{{ env_var('SNOW_PASSWORD') }}"
+      # écrit en dur pour éviter indirection (pas un secret donc ok)
+      user: "CI_AGRIBALYSE"
+      private_key_path: "{{ env_var('SNOW_PRIVATE_KEY_PATH') }}"
+      # pas de private_key_passphrase car la clé de CI n'est pas chiffrée, un runner ne peut pas répondre à une invite
 
-      # configuration : en clair, à compléter
+
       role: TRANSFORMAGRIBALYSE
       warehouse: WH_AGRIBALYSE
       database: DATABASE_AGRIBALYSE
+      # un schéma à part pour gérer la CI dans son propre environnement 
+      schema: CI
+
+      threads: 4
+      client_session_keep_alive: false
+      query_tag: dbt_agribalyse
+    
+    #Utiliser pour tester l'utilisateur de la CI depuis ma machine avant de push (évite de déboguer dans runner)
+    ci_test:
+      type: snowflake
+
+      # Pas de password, on passe par private key
+      account: "{{ env_var('SNOW_ACCOUNT') }}"
+      # écrit en dur pour éviter indirection (pas un secret donc ok)
+      user: "CI_AGRIBALYSE"
+      private_key_path: "/home/valentin/.snowflake/sf_ci.p8"
+      # pas de private_key_passphrase car la clé de CI n'est pas chiffrée, un runner ne peut pas répondre à une invite
+
+      role: TRANSFORMAGRIBALYSE
+      warehouse: WH_AGRIBALYSE
+      database: DATABASE_AGRIBALYSE
+      # un schéma à part pour gérer la CI dans son propre environnement 
       schema: CI
 
       threads: 4
