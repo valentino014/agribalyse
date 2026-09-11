@@ -18,6 +18,7 @@ Projet dbt sur les données AGRIBALYSE, millésime 3.2 du 27 février 2025, fich
 - Metabase
 - MetricFlow
 
+
 ## Structure du projet
 
 - `data/`                       Données brutes téléchargées (CSV de ADEME)
@@ -246,3 +247,7 @@ La chaîne complète, de la source ADEME aux 3 métriques : staging → dimensio
 - Mise en place de la connexion Snowflake pour transférer les données du csv vers le staging.
 - Structuration d'un projet dbt séparant données brutes et modélisation 
 - Ajout de tests pour valider les données
+
+## Compatibilité dbt v2
+
+Vérification tentée le 10/09/2026 : `dbt parse --use-v2-parser` n'existe pas sur dbt Core X.Y.Z (options proposées : `--no-static-parser`, `--static-parser`, `--use-experimental-parser`). Compatibilité v2 non testée. Aucune migration entreprise.
